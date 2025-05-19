@@ -1,10 +1,15 @@
 from django.shortcuts import render, redirect
 
+from django.conf import settings  # Import settings to get the AbstractUser model
+
+from django.contrib.auth import get_user_model  # This should get my AbstractUser model from my base.py from my settings
+
+
 # Esto importa todos los formularios
 from .forms import EmailParaRegistrarseFormulario, ContraseñaParaRegistrarseFormulario, IniciarSesionFormulario
 
-# Esto me importa todos mis modelos
-from django.contrib.auth.models import User
+# This should get my AbstractUser model from my models.py file from my "autenticacion" app
+from autenticacion.models import User
 
 # Esto me permitirá hacer peticiones HTTP a la API de Wordpress y Woocommerce
 import requests
@@ -133,6 +138,8 @@ Login Integration: If you want users to log in using their email and password (i
 iniciar_sesion view to use Django’s default authenticate() with email and password. You might need a custom backend or user model 
 to support email-based login.
 Let me know if you need help with the login view, testing, or any additional modifications!
+
+Al registrarme, ya me sale el mensaje de confirmación, y me logueo como el usuario logueado
 """
 
 
@@ -152,72 +159,81 @@ def registrarse(request):
         # Si el formulario es válido (por razones de seguridad)
         if emailForm.is_valid() and passwordForm.is_valid():
 
+            # This gets the username from the form
+            username = emailForm.cleaned_data['username']
+
             # Esto coge el email del formulario
             email = emailForm.cleaned_data['email']
 
             password = passwordForm.cleaned_data['password']  # Get the password from the form
 
-            # # Esto coge el Número de Pedido del Formulario
-            # numero_del_pedido = form.cleaned_data['numero_del_pedido']
-
-            # # Authenticate the user using the custom backend
-            # result = authenticate(request, email=email)  
-
-            # backend = WooCommerceSubscriptionBackend()
-
-            # result = backend.authenticate(request, email=email)  # Add subscription_id if needed: , subscription_id=subscription_id)
-
             # Esto intentará crear a un usuario y registrarlo
             try:
-                # Authenticate the user using the custom backend.
-                # Enviaré tanto el email como la contraseña a mi backend customizado de autenticacion.
-                user = authenticate(request, email=email, password=password)
+                # # Authenticate the user using the custom backend.
+                # # Enviaré tanto el email como la contraseña a mi backend customizado de autenticacion.
+                # user = authenticate(request, email=email, password=password)
 
-                # user = authenticate(request, email=email, subscription_id=numero_del_pedido)
+                # This creates the new user in the database
+                # new_user = settings.AUTH_USER_MODEL.objects.create_user(username, email, password)
+                # User = get_user_model()
+                new_user = User.objects.create_user(username, email, password)
+                new_user.save()
 
-                # # Check the result from the backend
-                # if isinstance(result, dict) and 'error' in result:
-                #     # Handle the specific error (username/email already exists)
-                #     messages.error(request, result['error'])
-                # elif result is None:
-                #     # Generic error for non-existent email, expired subscription, or API issues
-                #     messages.error(request, "Ese email no existe en Wistarr, o tu suscripción no está activa. Por favor, verifica que hayas escrito correctamente tu email y revisa el estado de tu suscripción, o contacta al administrador para más información.")
-                # else:
+                # This will log in the newly created user
+                login(request, new_user)
 
-                # Si el email del usuario es correcto
-                if user is not None:
+                # This will render a success flash message
+                messages.success(request, 'Te has registrado exitosamente.')
 
-                    login(request, user)  # Esto permite al usuario iniciar sesión
-                    return redirect('inicio')  # Redirige al usuario a la pagina de Inicio
+                # This will redirect the logged user to the home page
+                return redirect('inicio')
 
-                    # # Si el usuario esta repetido, mostrarle un mensaje de error
-                    # if user is 'usuario ya existe':
-                    #     messages.error(request, 'Ese correo electrónico ya existe en la base de datos de este sitio web. Por favor, usa otro email que hayas registrado en Wistarr.')
+                # # This will redirect the logged user to the home page
+                # return HttpResponseRedirect(reverse("index"))
 
-                    # else:
-                    # # User successfully authenticated and can be logged in
-                    # user = result
+                # # Si el email del usuario es correcto
+                # if user is not None:
+                #
+                #     login(request, user)  # Esto permite al usuario iniciar sesión
+                #     return redirect('inicio')  # Redirige al usuario a la pagina de Inicio
+                #
+                #     # # Si el usuario esta repetido, mostrarle un mensaje de error
+                #     # if user is 'usuario ya existe':
+                #     #     messages.error(request, 'Ese correo electrónico ya existe en la base de datos de
+                #     este sitio web. Por favor, usa otro email que hayas registrado en Wistarr.')
+                #
+                #     # else:
+                #     # # User successfully authenticated and can be logged in
+                #     # user = result
+                #
+                #     # Pondre un try/except por si me sale el ValueError que dice que el usuario este repetido
+                #     # try:
+                #
+                #     # except ValueError:
+                #     #     messages.error(request, 'Ese correo electrónico ya existe en la base de datos de
+                #     este sitio web. Por favor, usa otro email que hayas registrado en Wistarr.')
 
-                    # Pondre un try/except por si me sale el ValueError que dice que el usuario este repetido
-                    # try:
+                # else:  # Si el usuario no existe o tiene una suscripcion caducada, se le muestra un mensaje de error
+                #     messages.error(request,
+                #                    "Ese email no existe en Wistarr, o tu suscripción no está activa. Por f
+                #                    avor, verifica que hayas escrito correctamente tu email y revisa el estado de
+                #                    tu suscripción, o contacta al administrador para más información.")
 
-                    # except ValueError:
-                    #     messages.error(request, 'Ese correo electrónico ya existe en la base de datos de este sitio web. Por favor, usa otro email que hayas registrado en Wistarr.')
+                # message = 'Ese email no existe en Wistarr, o tu suscripción no está activa.'
+                # message += '<br>Por favor, verifica que hayas escrito correctamente tu email y revisa el estado
+                # de tu suscripción, o contacta al administrador para más información.'
 
-                else:  # Si el usuario no existe o tiene una suscripcion caducada, se le muestra un mensaje de error
-                    messages.error(request,
-                                   "Ese email no existe en Wistarr, o tu suscripción no está activa. Por favor, verifica que hayas escrito correctamente tu email y revisa el estado de tu suscripción, o contacta al administrador para más información.")
+            # Si el email ya existe en la base de datos de Django y ya esa cuenta esta creada, mostrar un mensaje de
+            # error.
 
-                    # message = 'Ese email no existe en Wistarr, o tu suscripción no está activa.'
-                    # message += '<br>Por favor, verifica que hayas escrito correctamente tu email y revisa el estado de tu suscripción, o contacta al administrador para más información.'
-
-            # Si el email ya existe en la base de datos de Django y ya esa cuenta esta creada, mostrar un mensaje de error.
             # Esto evita que se cree el mismo usuario 2 veces en Django.
+            # This will print an error if the user types a username that was taken by someone else.
             except IntegrityError:
 
                 # Si el email ya existe, mostrar un mensaje de error
                 messages.error(request,
-                               'Ese correo electrónico ya existe en la base de datos de este sitio web. Por favor, usa otro email que hayas registrado en Wistarr.')
+                               'Error: Ese correo electrónico o nombre de usuario ya existe en la base de datos de este sitio web. Por favor, usa otro email que hayas registrado en Wistarr.'
+                               )
 
                 # except ValidationError as e:
 
@@ -310,7 +326,6 @@ def registrarse(request):
             # If the form is invalid, show a generic form error message
             messages.error(request, 'Por favor, corrige los errores en el formulario.')
 
-
     else:  # Esto renderiza el formulario si no se ha enviado el formulario
         # Esto crea una instancia del Formulario con el Email para Registrarse
         emailForm = EmailParaRegistrarseFormulario()
@@ -401,6 +416,7 @@ The generic error message (“Tu email no existe en Wistarr, o tu suscripción h
 No Changes to Backends:
 Your WooCommerceSubscriptionBackend remains unchanged, ensuring it’s only used for registration (e.g., when called from registrarse).
 
+MODIFICAR: NO DEBO LOGUEARME A WORDPRESS PARA LOGUEARME.
 """
 
 
