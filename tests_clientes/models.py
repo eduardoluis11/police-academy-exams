@@ -1,5 +1,9 @@
 from django.db import models
 
+# This will access my base.py file with my settings
+from django.conf import settings  # Import settings
+
+
 from tests_administradores.models import PreguntaDelTest  # Modelo de Test de tests para administradores
 
 # Create your models here.
@@ -52,7 +56,8 @@ Si el límite de tiempo es infinito o ilimitado, dejaré el campo de tiempo rest
 
 class SesionDelTest(models.Model):
 
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)     # Nombre del usuario que está tomando el test
+    # I will call my AbstractUser model, which I nicknamed "User", from my "autenticacion" app
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)     # Nombre del usuario que está tomando el test
     hora_de_inicio = models.DateTimeField(auto_now_add=True)    # Hora de inicio del test
     hora_del_fin_del_test = models.DateTimeField(null=True, blank=True)     # Hora de finalización del test
 
@@ -172,8 +177,9 @@ class PreguntaGuardadaPorElUsuario(models.Model):
     # Esto me almacena la pregunta que guardó el cliente
     pregunta = models.ForeignKey(PreguntaDelTest, on_delete=models.CASCADE)
 
-    # Esto me almacena el usuario que guardó la pregunta
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    # Esto me almacena el usuario que guardó la pregunta.
+    # I will call my AbstractUser model, which is in in my base.py file, under the variable AUTH USER MODEL.
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     # Esto me almacena el test al que pertenece la pregunta
     test = models.ForeignKey('tests_administradores.Test', on_delete=models.CASCADE)

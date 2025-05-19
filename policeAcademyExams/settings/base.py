@@ -185,6 +185,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# This will let me user the AbstractUser model to be able to authenticate my users
+AUTH_USER_MODEL = 'autenticacion.User'
+
 """ Backend del Email.
 
 Por los momentos, enviaré todos los emails desde Django a la consola (fuente: JeffP en 
