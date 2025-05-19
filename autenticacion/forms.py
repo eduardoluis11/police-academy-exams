@@ -1,6 +1,6 @@
 from django import forms
 
-""" Formulario con el Campo del Email para Registrarse.
+""" Formulario con el Campo del Nombre de Usuario y el Email para Registrarse.
 
 Solo le pediré al usuario su email de su cuenta de wordpress. No le pedire el numero de su pedido, ya que puedo revisar
 todos los pedidos de ese usuario usand ola AP de WP Swings, y revisare si tiene alguna suscripcion activa. De ser así, le
@@ -35,21 +35,38 @@ Sino, es que la gente pensará que tienen que poner su contraseña de Wordpress.
 para poder crearse su cuenta.
 
 """
+
+
 class EmailParaRegistrarseFormulario(forms.Form):
+
+    # Username field
+    username = forms.CharField(
+        label='Username',
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Username',
+            'class': 'form-control',  # Bootstrap class for input styling
+        }))
+
+    # Email
     email = forms.EmailField(
-        label='Email', 
-        max_length=254, 
+        label='Email',
+        max_length=254,
         widget=forms.EmailInput(attrs={
             'placeholder': 'Email',
             'class': 'form-control',  # Bootstrap class for input styling
-            }))
-    
-    # numero_del_pedido = forms.CharField(label='Número del Pedido', max_length=255, widget=forms.TextInput(attrs={'placeholder': 'Número del Pedido'}))
+        }))
+
+    # numero_del_pedido = forms.CharField(label='Número del Pedido', max_length=255,
+    # widget=forms.TextInput(attrs={'placeholder': 'Número del Pedido'}))
+
 
 """ Formulario on el Campo de la Contraseña para Registrarse.
 
 Este formulario solo tendrá el campo de la Contraseñay y el campo para Confirmar la Contraseña.
 """
+
+
 class ContraseñaParaRegistrarseFormulario(forms.Form):
     password = forms.CharField(
         label='Contraseña',
@@ -57,7 +74,7 @@ class ContraseñaParaRegistrarseFormulario(forms.Form):
         widget=forms.PasswordInput(attrs={
             'placeholder': 'Contraseña',
             'class': 'form-control',  # Bootstrap class for input styling
-            })
+        })
     )
     confirmar_password = forms.CharField(
         label='Confirmar Contraseña',
@@ -65,7 +82,7 @@ class ContraseñaParaRegistrarseFormulario(forms.Form):
         widget=forms.PasswordInput(attrs={
             'placeholder': 'Confirma tu contraseña',
             'class': 'form-control',  # Bootstrap class for input styling
-            })
+        })
     )
 
     def clean(self):
@@ -78,28 +95,30 @@ class ContraseñaParaRegistrarseFormulario(forms.Form):
 
         if password and confirmar_password and password != confirmar_password:
             raise forms.ValidationError("Las contraseñas no coinciden. Por favor, inténtalo de nuevo.")
-        
+
         return cleaned_data
-    
+
 
 """ Formulario para Iniciar Sesion. 
 
 Solo le pediré al usuario el email, y su contraseña de su cuenta de la web app de Django para que puedan iniciar sesión.
 
 """
+
+
 class IniciarSesionFormulario(forms.Form):
     email = forms.EmailField(
-        label='Email', 
-        max_length=254, 
+        label='Email',
+        max_length=254,
         widget=forms.EmailInput(attrs={
             'placeholder': 'Email',
             'class': 'form-control',  # Bootstrap class for input styling
-            }))
-    
+        }))
+
     password = forms.CharField(
-        label='Contraseña', 
-        max_length=128, 
+        label='Contraseña',
+        max_length=128,
         widget=forms.PasswordInput(attrs={
             'placeholder': 'Contraseña',
             'class': 'form-control',  # Bootstrap class for input styling
-            }))
+        }))
