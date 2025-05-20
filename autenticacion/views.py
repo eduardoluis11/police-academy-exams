@@ -416,6 +416,10 @@ The generic error message (“Tu email no existe en Wistarr, o tu suscripción h
 No Changes to Backends:
 Your WooCommerceSubscriptionBackend remains unchanged, ensuring it’s only used for registration (e.g., when called from registrarse).
 
+I will use the “authenticate” function to check if a username and its respective password exist inside the database 
+(source: https://docs.djangoproject.com/en/dev/topics/auth/default/ ). 
+
+BOOKMARK.
 MODIFICAR: NO DEBO LOGUEARME A WORDPRESS PARA LOGUEARME.
 """
 
@@ -433,69 +437,83 @@ def iniciar_sesion(request):
         # Si el formulario es válido (por razones de seguridad)
         if form.is_valid():
 
-            # Esto coge el email del formulario
-            email = form.cleaned_data['email']
+            username = form.cleaned_data['username']  # Esto coge el nombre de usuario del formulario
             password = form.cleaned_data['password']  # Esto coge la contraseña del formulario
 
-            # Step 1: Verify Django credentials
+            # email = form.cleaned_data['email']  # Esto coge el email del formulario
+
+            # Verify Django credentials
             try:
 
-                # Intento buscar al usuario usando su email en la base de datos de Django
-                user = User.objects.get(email=email)
+                # This will check if the username and password exist in the database
+                check_user = authenticate(request, username=username, password=password)
 
-                if user.check_password(password):
-                    # Step 2: Check WordPress and subscription status
-                    wordpress_username = os.environ.get('WORDPRESS_USERNAME')
-                    wordpress_app_password = os.environ.get('WORDPRESS_APP_PASSWORD')
-                    wordpress_base_url = os.environ.get('WORDPRESS_BASE_URL')
-                    wp_swings_consumer_secret = os.environ.get('WP_SWINGS_SUBSCRIPTIONS_CONSUMER_SECRET')
+                # If the user exists, they will be logged in
+                if check_user is not None:
+                    login(request, check_user)
 
-                    response = requests.get(
-                        f'{wordpress_base_url}/wp-json/wp/v2/users?search={email}',
-                        auth=HTTPBasicAuth(wordpress_username, wordpress_app_password)
-                    )
-
-                    if response.status_code == 200:
-                        users = response.json()
-                        if users:
-                            username = users[0]['name']
-
-                            wp_swings_response = requests.get(
-                                f'{wordpress_base_url}/wp-json/wsp-route/v1/wsp-view-subscription?consumer_secret={wp_swings_consumer_secret}'
-                            )
-
-                            if wp_swings_response.status_code == 200:
-                                wp_swings_data = wp_swings_response.json()
-
-                                has_active_subscription = False
-                                for subscription in wp_swings_data["data"]:
-                                    if (subscription['user_name'].lower() == username.lower() and
-                                            subscription['status'] == 'active'):
-                                        has_active_subscription = True
-                                        break
-
-                                if has_active_subscription:
-
-                                    # Esto hará que el usuario inice sesión. Usaré el backend por defecto de Django para autenticarme.
-                                    # Si no especifico el backend que voy a usar, me saldrá un error de Django.
-                                    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-
-                                    messages.success(request, '¡Inicio de sesión exitoso!')
-                                    return redirect('inicio')
-                                else:
-                                    messages.error(request,
-                                                   'Tu email y/o contraseña son incorrectos, o tu suscripción ha caducado.')
-                            else:
-                                messages.error(request,
-                                               'Hubo un error al verificar tu suscripción. Por favor, inténtalo de nuevo más tarde.')
-                        else:
-                            messages.error(request,
-                                           'Tu email y/o contraseña son incorrectos, o tu suscripción ha caducado.')
-                    else:
-                        messages.error(request,
-                                       'Hubo un error al verificar tus credenciales. Por favor, inténtalo de nuevo más tarde.')
+                    # This will redirect the logged user to the home page
+                    return redirect('inicio')
                 else:
-                    messages.error(request, 'Tu email y/o contraseña son incorrectos, o tu suscripción ha caducado.')
+                    # If the user doesn't exist, show an error message
+                    messages.error(request, 'You typed an incorrect username and/or password.')
+
+                # # Intento buscar al usuario usando su email en la base de datos de Django
+                # user = User.objects.get(email=email)
+                #
+                # if user.check_password(password):
+                #     # Step 2: Check WordPress and subscription status
+                #     wordpress_username = os.environ.get('WORDPRESS_USERNAME')
+                #     wordpress_app_password = os.environ.get('WORDPRESS_APP_PASSWORD')
+                #     wordpress_base_url = os.environ.get('WORDPRESS_BASE_URL')
+                #     wp_swings_consumer_secret = os.environ.get('WP_SWINGS_SUBSCRIPTIONS_CONSUMER_SECRET')
+                #
+                #     response = requests.get(
+                #         f'{wordpress_base_url}/wp-json/wp/v2/users?search={email}',
+                #         auth=HTTPBasicAuth(wordpress_username, wordpress_app_password)
+                #     )
+                #
+                #     if response.status_code == 200:
+                #         users = response.json()
+                #         if users:
+                #             username = users[0]['name']
+                #
+                #             wp_swings_response = requests.get(
+                #                 f'{wordpress_base_url}/wp-json/wsp-route/v1/wsp-view-subscription?consumer_secret={wp_swings_consumer_secret}'
+                #             )
+                #
+                #             if wp_swings_response.status_code == 200:
+                #                 wp_swings_data = wp_swings_response.json()
+                #
+                #                 has_active_subscription = False
+                #                 for subscription in wp_swings_data["data"]:
+                #                     if (subscription['user_name'].lower() == username.lower() and
+                #                             subscription['status'] == 'active'):
+                #                         has_active_subscription = True
+                #                         break
+                #
+                #                 if has_active_subscription:
+                #
+                #                     # Esto hará que el usuario inice sesión. Usaré el backend por defecto de Django para autenticarme.
+                #                     # Si no especifico el backend que voy a usar, me saldrá un error de Django.
+                #                     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                #
+                #                     messages.success(request, '¡Inicio de sesión exitoso!')
+                #                     return redirect('inicio')
+                #                 else:
+                #                     messages.error(request,
+                #                                    'Tu email y/o contraseña son incorrectos, o tu suscripción ha caducado.')
+                #             else:
+                #                 messages.error(request,
+                #                                'Hubo un error al verificar tu suscripción. Por favor, inténtalo de nuevo más tarde.')
+                #         else:
+                #             messages.error(request,
+                #                            'Tu email y/o contraseña son incorrectos, o tu suscripción ha caducado.')
+                #     else:
+                #         messages.error(request,
+                #                        'Hubo un error al verificar tus credenciales. Por favor, inténtalo de nuevo más tarde.')
+                # else:
+                #     messages.error(request, 'Tu email y/o contraseña son incorrectos, o tu suscripción ha caducado.')
 
                 # # Authenticate the user using the custom backend
                 # user = authenticate(request, email=email, password=password)
@@ -508,16 +526,15 @@ def iniciar_sesion(request):
                 # else:   # Si el usuario no existe, se le muestra un mensaje de error
                 #     message = 'Nombre de usuario o contraseña incorrectos, o tu suscripción puede estar caducada'
 
+            except User.DoesNotExist:   # If the user doesn't exist
 
-            except User.DoesNotExist:
-                messages.error(request, 'Tu email y/o contraseña son incorrectos, o tu suscripción ha caducado.')
+                messages.error(request, 'You typed an incorrect username and/or password.')
 
-        else:
-            # If the form is invalid, show a generic form error message
+        else:   # If the form is invalid,
+            # Show a generic form error message
             messages.error(request, 'Por favor, corrige los errores en el formulario.')
 
-
-    else:  # Esto renderiza el formulario si no se ha enviado el formulario
+    else:  # Esto renderiza el formulario si no se ha enviado
         # Esto crea una instancia del Formulario de Django de  Inicio de Sesion
         form = IniciarSesionFormulario()
 

@@ -103,17 +103,30 @@ class ContraseñaParaRegistrarseFormulario(forms.Form):
 
 Solo le pediré al usuario el email, y su contraseña de su cuenta de la web app de Django para que puedan iniciar sesión.
 
+Creo que modificaré la forma de loguearte para que sea nombre de usuario en lugar de email, ya que AbstractUser te 
+deja loguearte con nombre de usuario por defecto, NO por email. E igual, que como te autentiques no es lo importante 
+en mi portfolio. Lo importante es la función de tomar los tests en sí.
 """
 
 
 class IniciarSesionFormulario(forms.Form):
-    email = forms.EmailField(
-        label='Email',
-        max_length=254,
-        widget=forms.EmailInput(attrs={
-            'placeholder': 'Email',
+
+    # Username Field.
+    username = forms.CharField(
+        label='Username',
+        max_length=150,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Username',
             'class': 'form-control',  # Bootstrap class for input styling
         }))
+
+    # email = forms.EmailField(
+    #     label='Email',
+    #     max_length=254,
+    #     widget=forms.EmailInput(attrs={
+    #         'placeholder': 'Email',
+    #         'class': 'form-control',  # Bootstrap class for input styling
+    #     }))
 
     password = forms.CharField(
         label='Contraseña',
