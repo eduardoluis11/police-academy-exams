@@ -8,6 +8,10 @@ Esta es la versión en español del README.md.
 
 Eduardo Salinas
 
+## Demo mostrando cómo funciona
+
+https://youtu.be/05XNZn6Xsuo?si=qtrevc5ArWs93jQx
+
 ## Instrucciones de uso
 
 1) Crea un entorno virtual. Hay varias formas de hacer esto. Yo uso mkvirtualenv en Windows. Para instalar mkvirtualenv en Windows, sigue estos pasos:
